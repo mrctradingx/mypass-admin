@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { v4 as uuidv4 } from 'uuid';
 import { encode as base32Encode } from 'base32.js';
+import { db } from './firebase'; // Import Firestore
+import { collection, addDoc, getDocs } from 'firebase/firestore'; // Import Firestore functions
 import TicketDisplay from './TicketDisplay';
 import './App.css';
 
 function App() {
   const { isAuthenticated, isLoading, loginWithRedirect, logout, error } = useAuth0();
-  const [events, setEvents] = useState(() => {
-    const savedEvents = localStorage.getItem('ticketEvents');
-    return savedEvents ? JSON.parse(savedEvents) : [];
-  });
+  const [events, setEvents] = useState([]);
   const [formData, setFormData] = useState({
     eventName: '',
     eventLocation: '',
@@ -27,17 +26,23 @@ function App() {
   const [editTokens, setEditTokens] = useState([]);
   const [editNote, setEditNote] = useState('');
   const [appError, setAppError] = useState('');
-  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Lấy dữ liệu sự kiện từ Firestore khi ứng dụng khởi động
   useEffect(() => {
-    localStorage.setItem('ticketEvents', JSON.stringify(events));
-  }, [events]);
+    const fetchEvents = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'events'));
+        const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setEvents(eventsData);
+      } catch (err) {
+        console.error('Error fetching events from Firestore:', err);
+        setAppError('Failed to fetch events');
+      }
+    };
 
-  useEffect(() => {
-    if (error) {
-      setAppError(`Auth0 Error: ${error.message}`);
-    }
-  }, [error]);
+    fetchEvents();
+  }, []);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -74,7 +79,7 @@ function App() {
     return '';
   };
 
-  const generateTickets = () => {
+  const generateTickets = async () => {
     const validationError = validateForm();
     if (validationError) {
       setAppError(validationError);
@@ -117,8 +122,16 @@ function App() {
       });
     }
 
-    setEvents([...events, { eventId, tickets, note: formData.note || '' }]);
-    // Không chuyển hướng tự động, hiển thị link công khai để người dùng sao chép
+    const newEvent = { eventId, tickets, note: formData.note || '' };
+
+    // Lưu sự kiện vào Firestore
+    try {
+      await addDoc(collection(db, 'events'), newEvent);
+      setEvents([...events, newEvent]);
+    } catch (err) {
+      console.error('Error saving event to Firestore:', err);
+      setAppError('Failed to save event');
+    }
   };
 
   const startEditing = (event) => {
@@ -160,6 +173,8 @@ function App() {
     setEditNote('');
   };
 
+  const isPublicRoute = location.pathname.match(/^\/[a-z]+-[a-z0-9]+(\/seat[0-9]+)?$/);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -168,155 +183,159 @@ function App() {
     return <div className="error">{appError}</div>;
   }
 
-  if (!isAuthenticated) {
+  if (!isPublicRoute && !isAuthenticated) {
     loginWithRedirect();
     return null;
   }
 
   return (
     <div className="App">
-      <div className="header">
-        <h1>TicketMaster SafeTix Generator</h1>
-        <button onClick={() => logout({ returnTo: window.location.origin })} className="logout-button">
-          Logout
-        </button>
-      </div>
-      {appError && <p className="error">{appError}</p>}
-      <div className="form">
-        <h3>Event Information</h3>
-        <input
-          type="text"
-          name="eventName"
-          placeholder="Event Name (e.g., Cardinals vs Dolphins)"
-          value={formData.eventName}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="eventLocation"
-          placeholder="Location (e.g., Hard Rock Stadium)"
-          value={formData.eventLocation}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="eventDateTime"
-          placeholder="Date & Time (e.g., Sun, Oct 27, 2024, 1:00 PM)"
-          value={formData.eventDateTime}
-          onChange={handleInputChange}
-        />
-        <h3>Ticket Information</h3>
-        <input
-          type="text"
-          name="section"
-          placeholder="Section (e.g., 332)"
-          value={formData.section}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="row"
-          placeholder="Row (e.g., 20)"
-          value={formData.row}
-          onChange={handleInputChange}
-        />
-        <input
-          type="number"
-          name="seatStart"
-          min="1"
-          placeholder="Starting Seat (e.g., 1)"
-          value={formData.seatStart}
-          onChange={handleInputChange}
-        />
-        <input
-          type="number"
-          name="seatCount"
-          min="1"
-          max="8"
-          placeholder="Number of Tickets (1-8)"
-          value={formData.seatCount}
-          onChange={handleInputChange}
-        />
-        <h3>Additional Information</h3>
-        <input
-          type="text"
-          name="note"
-          placeholder="Note (e.g., Sold to John)"
-          value={formData.note}
-          onChange={handleInputChange}
-        />
-        <h3>Security Keys for Each Ticket</h3>
-        {Array.from({ length: parseInt(formData.seatCount) || 1 }).map((_, index) => (
-          <div key={index} className="key-input">
-            <h4>Ticket {index + 1} (Seat {parseInt(formData.seatStart) + index})</h4>
-            <input
-              type="text"
-              placeholder="Raw Token"
-              value={formData.keys[index].rawToken}
-              onChange={(e) => handleKeyChange(index, 'rawToken', e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Customer Key (hex, e.g., 6dfb0b853dbfa5309a9763d3c0fdd2727de9b2e6)"
-              value={formData.keys[index].ck}
-              onChange={(e) => handleKeyChange(index, 'ck', e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Event Key (hex, e.g., f03c6f066714c536d9e457d79edc74ee0744b999)"
-              value={formData.keys[index].ek}
-              onChange={(e) => handleKeyChange(index, 'ek', e.target.value)}
-            />
+      {!isPublicRoute && (
+        <>
+          <div className="header">
+            <h1>TicketMaster SafeTix Generator</h1>
+            <button onClick={() => logout({ returnTo: window.location.origin })} className="logout-button">
+              Logout
+            </button>
           </div>
-        ))}
-        <button onClick={generateTickets}>Generate Tickets</button>
-      </div>
-
-      {events.length > 0 && (
-        <div className="event-list">
-          <h2>Generated Events</h2>
-          {events.map((event) => (
-            <div key={event.eventId} className="event-item">
-              <div className="event-link">
-                <span>Event: {event.tickets[0].eventName} ({event.tickets.length} tickets) {event.note ? `- ${event.note}` : ''}</span>
-                <p>
-                  Public Link: <a href={`https://mypassdelivery.com/${event.eventId}`} target="_blank" rel="noopener noreferrer">
-                    https://mypassdelivery.com/{event.eventId}
-                  </a>
-                </p>
+          {appError && <p className="error">{appError}</p>}
+          <div className="form">
+            <h3>Event Information</h3>
+            <input
+              type="text"
+              name="eventName"
+              placeholder="Event Name (e.g., Cardinals vs Dolphins)"
+              value={formData.eventName}
+              onChange={handleInputChange}
+            />
+            <input
+              type="text"
+              name="eventLocation"
+              placeholder="Location (e.g., Hard Rock Stadium)"
+              value={formData.eventLocation}
+              onChange={handleInputChange}
+            />
+            <input
+              type="text"
+              name="eventDateTime"
+              placeholder="Date & Time (e.g., Sun, Oct 27, 2024, 1:00 PM)"
+              value={formData.eventDateTime}
+              onChange={handleInputChange}
+            />
+            <h3>Ticket Information</h3>
+            <input
+              type="text"
+              name="section"
+              placeholder="Section (e.g., 332)"
+              value={formData.section}
+              onChange={handleInputChange}
+            />
+            <input
+              type="text"
+              name="row"
+              placeholder="Row (e.g., 20)"
+              value={formData.row}
+              onChange={handleInputChange}
+            />
+            <input
+              type="number"
+              name="seatStart"
+              min="1"
+              placeholder="Starting Seat (e.g., 1)"
+              value={formData.seatStart}
+              onChange={handleInputChange}
+            />
+            <input
+              type="number"
+              name="seatCount"
+              min="1"
+              max="8"
+              placeholder="Number of Tickets (1-8)"
+              value={formData.seatCount}
+              onChange={handleInputChange}
+            />
+            <h3>Additional Information</h3>
+            <input
+              type="text"
+              name="note"
+              placeholder="Note (e.g., Sold to John)"
+              value={formData.note}
+              onChange={handleInputChange}
+            />
+            <h3>Security Keys for Each Ticket</h3>
+            {Array.from({ length: parseInt(formData.seatCount) || 1 }).map((_, index) => (
+              <div key={index} className="key-input">
+                <h4>Ticket {index + 1} (Seat {parseInt(formData.seatStart) + index})</h4>
+                <input
+                  type="text"
+                  placeholder="Raw Token"
+                  value={formData.keys[index].rawToken}
+                  onChange={(e) => handleKeyChange(index, 'rawToken', e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Customer Key (hex, e.g., 6dfb0b853dbfa5309a9763d3c0fdd2727de9b2e6)"
+                  value={formData.keys[index].ck}
+                  onChange={(e) => handleKeyChange(index, 'ck', e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Event Key (hex, e.g., f03c6f066714c536d9e457d79edc74ee0744b999)"
+                  value={formData.keys[index].ek}
+                  onChange={(e) => handleKeyChange(index, 'ek', e.target.value)}
+                />
               </div>
-              <button onClick={() => startEditing(event)} className="edit-button">
-                Edit Tokens
-              </button>
-              {editEventId === event.eventId && (
-                <div className="edit-tokens">
-                  <h3>Edit Raw Tokens for {event.tickets[0].eventName}</h3>
-                  <div className="token-input">
-                    <label>Note:</label>
-                    <input
-                      type="text"
-                      value={editNote}
-                      onChange={handleNoteChange}
-                      placeholder="Note (e.g., Sold to John)"
-                    />
+            ))}
+            <button onClick={generateTickets}>Generate Tickets</button>
+          </div>
+
+          {events.length > 0 && (
+            <div className="event-list">
+              <h2>Generated Events</h2>
+              {events.map((event) => (
+                <div key={event.eventId} className="event-item">
+                  <div className="event-link">
+                    <span>Event: {event.tickets[0].eventName} ({event.tickets.length} tickets) {event.note ? `- ${event.note}` : ''}</span>
+                    <p>
+                      Public Link: <a href={`https://mypassdelivery.com/${event.eventId}`} target="_blank" rel="noopener noreferrer">
+                        https://mypassdelivery.com/{event.eventId}
+                      </a>
+                    </p>
                   </div>
-                  {event.tickets.map((ticket, index) => (
-                    <div key={index} className="token-input">
-                      <label>Ticket {index + 1} (Seat {ticket.seat}):</label>
-                      <input
-                        type="text"
-                        value={editTokens[index]}
-                        onChange={(e) => handleTokenChange(index, e.target.value)}
-                      />
+                  <button onClick={() => startEditing(event)} className="edit-button">
+                    Edit Tokens
+                  </button>
+                  {editEventId === event.eventId && (
+                    <div className="edit-tokens">
+                      <h3>Edit Raw Tokens for {event.tickets[0].eventName}</h3>
+                      <div className="token-input">
+                        <label>Note:</label>
+                        <input
+                          type="text"
+                          value={editNote}
+                          onChange={handleNoteChange}
+                          placeholder="Note (e.g., Sold to John)"
+                        />
+                      </div>
+                      {event.tickets.map((ticket, index) => (
+                        <div key={index} className="token-input">
+                          <label>Ticket {index + 1} (Seat {ticket.seat}):</label>
+                          <input
+                            type="text"
+                            value={editTokens[index]}
+                            onChange={(e) => handleTokenChange(index, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                      <button onClick={saveTokens} className="save-button">Save</button>
+                      <button onClick={cancelEditing} className="cancel-button">Cancel</button>
                     </div>
-                  ))}
-                  <button onClick={saveTokens} className="save-button">Save</button>
-                  <button onClick={cancelEditing} className="cancel-button">Cancel</button>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       <Routes>

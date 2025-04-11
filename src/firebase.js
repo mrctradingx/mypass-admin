@@ -3,12 +3,12 @@ import { getFirestore } from 'firebase/firestore';
 
 // Cấu hình Firebase (dán đoạn mã từ Firebase)
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-auth-domain",
-  projectId: "your-project-id",
-  storageBucket: "your-storage-bucket",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyCoSJaSYZDdAyZpM-3mCXsU_ZQUXYRHIJA",
+  authDomain: "mypass-29358.firebaseapp.com",
+  projectId: "mypass-29358",
+  storageBucket: "mypass-29358.firebasestorage.app",
+  messagingSenderId: "750286477020",
+  appId: "1:750286477020:web:a30de357e17dce4e344619"
 };
 
 // Khởi tạo Firebase

@@ -31,12 +31,14 @@ function App() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        console.log('Attempting to fetch events from Firestore...');
         const querySnapshot = await getDocs(collection(db, 'events'));
+        console.log('Fetched events:', querySnapshot.docs.length);
         const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setEvents(eventsData);
       } catch (err) {
         console.error('Error fetching events from Firestore:', err);
-        setAppError('Failed to fetch events');
+        setAppError('Failed to fetch events: ' + err.message);
       }
     };
 
@@ -124,11 +126,13 @@ function App() {
     const newEvent = { eventId, tickets, note: formData.note || '' };
 
     try {
+      console.log('Attempting to save event to Firestore:', newEvent);
       await addDoc(collection(db, 'events'), newEvent);
+      console.log('Event saved successfully:', eventId);
       setEvents([...events, newEvent]);
     } catch (err) {
       console.error('Error saving event to Firestore:', err);
-      setAppError('Failed to save event');
+      setAppError('Failed to save event: ' + err.message);
     }
   };
 
@@ -171,7 +175,7 @@ function App() {
     setEditNote('');
   };
 
-  const isPublicRoute = location.pathname.match(/^\/[a-z]+-[a-z0-9]+(\/seat[0-9]+)?$/);
+  const isPublicRoute = location.pathname.match(/^\/[\p{L}\p{N}\-]+(\/seat[0-9]+)?$/u);
 
   if (isLoading) {
     return <div>Loading...</div>;

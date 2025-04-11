@@ -1,18 +1,18 @@
 {
   "routes": [
-    { "src": "/static/(.*)", "dest": "/static/$1" }, // Phục vụ các file tĩnh
-    { "src": "/manifest.json", "dest": "/manifest.json" }, // Phục vụ manifest.json
-    { "src": "/favicon.ico", "dest": "/favicon.ico" }, // Phục vụ favicon.ico
+    { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/favicon.ico", "dest": "/favicon.ico" },
     {
       "src": "/([a-z]+-[a-z0-9]+)",
       "status": 301,
       "headers": { "Location": "https://mypassdelivery.com/$1" }
     },
     {
-      "src": "/([a-z]+-[a-z0-9]+)/seat[0-9]+",
+      "src": "/([a-z]+-[a-z0-9]+)/(seat[0-9]+)",
       "status": 301,
       "headers": { "Location": "https://mypassdelivery.com/$1/$2" }
     },
-    { "src": "/(.*)", "dest": "/" } // Phục vụ giao diện admin
+    { "src": "/(.*)", "dest": "/" }
   ]
 }

@@ -3,13 +3,13 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { v4 as uuidv4 } from 'uuid';
 import { encode as base32Encode } from 'base32.js';
-import { db } from './firebase'; // Import Firestore
-import { collection, addDoc, getDocs } from 'firebase/firestore'; // Import Firestore functions
+import { db } from './firebase';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import TicketDisplay from './TicketDisplay';
 import './App.css';
 
 function App() {
-  const { isAuthenticated, isLoading, loginWithRedirect, logout, error } = useAuth0();
+  const { isAuthenticated, isLoading, loginWithRedirect, logout } = useAuth0();
   const [events, setEvents] = useState([]);
   const [formData, setFormData] = useState({
     eventName: '',
@@ -28,7 +28,6 @@ function App() {
   const [appError, setAppError] = useState('');
   const location = useLocation();
 
-  // Lấy dữ liệu sự kiện từ Firestore khi ứng dụng khởi động
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -124,7 +123,6 @@ function App() {
 
     const newEvent = { eventId, tickets, note: formData.note || '' };
 
-    // Lưu sự kiện vào Firestore
     try {
       await addDoc(collection(db, 'events'), newEvent);
       setEvents([...events, newEvent]);

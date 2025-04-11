@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom'; // Thêm import Link
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import bwipjs from 'bwip-js';
 import { TOTP } from 'otpauth';
 import './TicketDisplay.css';
@@ -13,7 +13,7 @@ function TicketDisplay({ events }) {
   const navigate = useNavigate();
 
   const event = events && Array.isArray(events) ? events.find((e) => e.eventId === eventId) : null;
-  const tickets = event ? event.tickets : [];
+  const tickets = useMemo(() => event ? event.tickets : [], [event]);
 
   useEffect(() => {
     if (seatId && tickets.length > 0) {
@@ -64,7 +64,7 @@ function TicketDisplay({ events }) {
     generateBarcode();
     const interval = setInterval(generateBarcode, 15000);
     return () => clearInterval(interval);
-  }, [currentTicketIndex, tickets]);
+  }, [currentTicketIndex, tickets, generateBarcode]);
 
   if (!event || tickets.length === 0) return <p>Event or tickets not found</p>;
 

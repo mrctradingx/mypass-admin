@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "base32.js": "^0.1.0",
     "bwip-js": "^4.5.3",
+    "firebase": "^11.6.0",
     "otpauth": "^9.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

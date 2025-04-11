@@ -1,0 +1,173 @@
+.ticket-display {
+  text-align: center;
+  margin: 20px;
+}
+
+.event-info h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.event-info p {
+  margin: 5px 0;
+  color: #333;
+}
+
+.ticket-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+.ticket-header {
+  background: #003087;
+  color: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-icon {
+  background: white;
+  color: #003087;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.ticket-details {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+  background: #003087;
+  color: white;
+}
+
+.ticket-details div {
+  text-align: center;
+}
+
+.ticket-details span {
+  display: block;
+  font-size: 14px;
+}
+
+.ticket-details h3 {
+  margin: 5px 0;
+  font-size: 24px;
+}
+
+.admission {
+  padding: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+.barcode-container {
+  position: relative;
+  padding: 10px;
+}
+
+.barcode-container img {
+  width: 100%;
+  height: auto;
+}
+
+.scan-effect {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: scan 2s infinite linear;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.warning {
+  padding: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.ticket-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.ticket-navigation button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.ticket-navigation button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ticket-navigation span {
+  margin: 0 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+.ticket-links {
+  margin-top: 20px;
+  padding: 10px;
+}
+
+.ticket-links h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.ticket-links div {
+  margin: 5px 0;
+}
+
+.ticket-links a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.ticket-links a:hover {
+  text-decoration: underline;
+}
+
+.ticket-links a.active {
+  font-weight: bold;
+  color: #003087;
+}
+
+.error {
+  color: red;
+  margin: 10px 0;
+  font-size: 14px;
+}

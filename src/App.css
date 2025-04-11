@@ -1,0 +1,204 @@
+.App {
+  text-align: center;
+  margin: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background-color: #c82333;
+}
+
+.form {
+  margin-bottom: 20px;
+}
+
+.form h3 {
+  margin: 10px 0;
+}
+
+.form input {
+  margin: 5px;
+  padding: 8px;
+  width: 300px;
+}
+
+.form button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.form button:hover {
+  background-color: #45a049;
+}
+
+.key-input {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.key-input h4 {
+  margin: 5px 0;
+}
+
+.event-list {
+  margin-top: 20px;
+}
+
+.event-list div {
+  margin: 10px 0;
+}
+
+.event-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.event-link {
+  flex: 1;
+  text-align: left;
+}
+
+.event-link p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.event-link a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.event-link a:hover {
+  text-decoration: underline;
+}
+
+.edit-button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background-color: #0056b3;
+}
+
+.edit-tokens {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.token-input {
+  margin: 5px 0;
+}
+
+.token-input label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.token-input input {
+  padding: 5px;
+  width: 300px;
+}
+
+.save-button {
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.save-button:hover {
+  background-color: #218838;
+}
+
+.cancel-button {
+  padding: 5px 10px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #c82333;
+}
+
+.error {
+  color: red;
+  margin: 10px 0;
+}
+
+/* Style cho trang đăng nhập */
+.login-page {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.login-page h1 {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.login-page button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.login-page button:hover {
+  background-color: #0056b3;
+}

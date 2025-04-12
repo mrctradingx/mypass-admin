@@ -3,6 +3,8 @@ const { doc, setDoc } = require('firebase/firestore');
 const { v4: uuidv4 } = require('uuid');
 
 const sendTicketEmail = async (recipientEmail, ticketData) => {
+  console.log('Firebase db instance:', db); // Thêm log để kiểm tra db
+
   const messageId = uuidv4();
 
   // Gọi API backend để gửi email
@@ -28,17 +30,23 @@ const sendTicketEmail = async (recipientEmail, ticketData) => {
   console.log(`Email sent to ${recipientEmail}`);
 
   // Lưu thông tin email vào Firestore
-  await setDoc(doc(db, 'emailTracking', messageId), {
-    messageId,
-    recipientEmail,
-    eventId: ticketData.eventId,
-    seatId: ticketData.seatId,
-    sentAt: new Date().toISOString(),
-    opened: false,
-    openedAt: null,
-    linkClicked: false,
-    linkClickedAt: null,
-  });
+  try {
+    await setDoc(doc(db, 'emailTracking', messageId), {
+      messageId,
+      recipientEmail,
+      eventId: ticketData.eventId,
+      seatId: ticketData.seatId,
+      sentAt: new Date().toISOString(),
+      opened: false,
+      openedAt: null,
+      linkClicked: false,
+      linkClickedAt: null,
+    });
+    console.log(`Email tracking saved to Firestore: ${messageId}`);
+  } catch (firestoreError) {
+    console.error(`Error saving email tracking to Firestore: ${firestoreError.message}`);
+    throw firestoreError; // Ném lỗi để hiển thị trên giao diện
+  }
 
   return messageId;
 };

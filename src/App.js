@@ -6,6 +6,7 @@ import { encode as base32Encode } from 'base32.js';
 import { db } from './firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import TicketDisplay from './TicketDisplay';
+import { sendTicketEmail } from './sendEmail';
 import './App.css';
 
 function App() {
@@ -20,12 +21,14 @@ function App() {
     seatStart: 1,
     seatCount: 1,
     note: '',
+    recipientEmail: '', // Thêm trường nhập email người nhận
     keys: Array(8).fill({ rawToken: '', ck: '', ek: '' }),
   });
   const [editEventId, setEditEventId] = useState(null);
   const [editTokens, setEditTokens] = useState([]);
   const [editNote, setEditNote] = useState('');
   const [appError, setAppError] = useState('');
+  const [emailTracking, setEmailTracking] = useState([]);
   const location = useLocation();
 
   useEffect(() => {
@@ -42,7 +45,18 @@ function App() {
       }
     };
 
+    const fetchEmailTracking = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'emailTracking'));
+        const trackingData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setEmailTracking(trackingData);
+      } catch (err) {
+        console.error('Error fetching email tracking:', err);
+      }
+    };
+
     fetchEvents();
+    fetchEmailTracking();
   }, []);
 
   const handleInputChange = (e) => {
@@ -77,6 +91,7 @@ function App() {
     if (!formData.row) return "Row is required.";
     if (!formData.seatStart || formData.seatStart < 1) return "Starting Seat must be at least 1.";
     if (!formData.seatCount || formData.seatCount < 1 || formData.seatCount > 8) return "Number of Tickets must be between 1 and 8.";
+    if (!formData.recipientEmail) return "Recipient Email is required.";
     return '';
   };
 
@@ -130,9 +145,22 @@ function App() {
       await addDoc(collection(db, 'events'), newEvent);
       console.log('Event saved successfully:', eventId);
       setEvents([...events, newEvent]);
+
+      for (const ticket of tickets) {
+        await sendTicketEmail(formData.recipientEmail, {
+          eventName: ticket.eventName,
+          eventDateTime: ticket.eventDateTime,
+          eventLocation: ticket.eventLocation,
+          section: ticket.section,
+          row: ticket.row,
+          seat: ticket.seat,
+          eventId: eventId,
+          seatId: ticket.seatId,
+        });
+      }
     } catch (err) {
-      console.error('Error saving event to Firestore:', err);
-      setAppError('Failed to save event: ' + err.message);
+      console.error('Error saving event or sending email:', err);
+      setAppError('Failed to save event or send email: ' + err.message);
     }
   };
 
@@ -256,6 +284,14 @@ function App() {
               value={formData.seatCount}
               onChange={handleInputChange}
             />
+            <h3>Recipient Email</h3>
+            <input
+              type="email"
+              name="recipientEmail"
+              placeholder="Recipient Email (e.g., customer@example.com)"
+              value={formData.recipientEmail}
+              onChange={handleInputChange}
+            />
             <h3>Additional Information</h3>
             <input
               type="text"
@@ -337,6 +373,42 @@ function App() {
               ))}
             </div>
           )}
+
+          <div className="email-tracking">
+            <h2>Email Tracking</h2>
+            {emailTracking.length > 0 ? (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Event ID</th>
+                    <th>Seat ID</th>
+                    <th>Sent At</th>
+                    <th>Opened</th>
+                    <th>Opened At</th>
+                    <th>Link Clicked</th>
+                    <th>Link Clicked At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {emailTracking.map(track => (
+                    <tr key={track.id}>
+                      <td>{track.recipientEmail}</td>
+                      <td>{track.eventId}</td>
+                      <td>{track.seatId}</td>
+                      <td>{track.sentAt}</td>
+                      <td>{track.opened ? 'Yes' : 'No'}</td>
+                      <td>{track.openedAt || '-'}</td>
+                      <td>{track.linkClicked ? 'Yes' : 'No'}</td>
+                      <td>{track.linkClickedAt || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No email tracking data available.</p>
+            )}
+          </div>
         </>
       )}
 

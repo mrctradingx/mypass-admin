@@ -5,6 +5,7 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
     "base32.js": "^0.1.0",
+    "bwip-js": "^4.5.3",
     "firebase": "^10.0.0",
     "otpauth": "^9.2.2",
     "react": "^18.2.0",

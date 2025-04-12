@@ -13,7 +13,11 @@ const sendTicketEmail = async (recipientEmail, ticketData) => {
     },
     body: JSON.stringify({
       recipientEmail,
-      ticketData,
+      ticketData: {
+        ...ticketData,
+        firstName: ticketData.firstName,
+        lastName: ticketData.lastName,
+      },
     }),
   });
 

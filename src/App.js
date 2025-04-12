@@ -21,7 +21,6 @@ function App() {
     seatStart: 1,
     seatCount: 1,
     note: '',
-    recipientEmail: '', // Thêm trường nhập email người nhận
     keys: Array(8).fill({ rawToken: '', ck: '', ek: '' }),
   });
   const [editEventId, setEditEventId] = useState(null);
@@ -29,6 +28,12 @@ function App() {
   const [editNote, setEditNote] = useState('');
   const [appError, setAppError] = useState('');
   const [emailTracking, setEmailTracking] = useState([]);
+  const [showEmailForm, setShowEmailForm] = useState(null);
+  const [emailFormData, setEmailFormData] = useState({
+    recipientEmail: '',
+    firstName: '',
+    lastName: '',
+  });
   const location = useLocation();
 
   useEffect(() => {
@@ -91,7 +96,6 @@ function App() {
     if (!formData.row) return "Row is required.";
     if (!formData.seatStart || formData.seatStart < 1) return "Starting Seat must be at least 1.";
     if (!formData.seatCount || formData.seatCount < 1 || formData.seatCount > 8) return "Number of Tickets must be between 1 and 8.";
-    if (!formData.recipientEmail) return "Recipient Email is required.";
     return '';
   };
 
@@ -145,22 +149,9 @@ function App() {
       await addDoc(collection(db, 'events'), newEvent);
       console.log('Event saved successfully:', eventId);
       setEvents([...events, newEvent]);
-
-      for (const ticket of tickets) {
-        await sendTicketEmail(formData.recipientEmail, {
-          eventName: ticket.eventName,
-          eventDateTime: ticket.eventDateTime,
-          eventLocation: ticket.eventLocation,
-          section: ticket.section,
-          row: ticket.row,
-          seat: ticket.seat,
-          eventId: eventId,
-          seatId: ticket.seatId,
-        });
-      }
     } catch (err) {
-      console.error('Error saving event or sending email:', err);
-      setAppError('Failed to save event or send email: ' + err.message);
+      console.error('Error saving event:', err);
+      setAppError('Failed to save event: ' + err.message);
     }
   };
 
@@ -201,6 +192,50 @@ function App() {
     setEditEventId(null);
     setEditTokens([]);
     setEditNote('');
+  };
+
+  const openEmailForm = (eventId) => {
+    setShowEmailForm(eventId);
+    setEmailFormData({ recipientEmail: '', firstName: '', lastName: '' });
+  };
+
+  const closeEmailForm = () => {
+    setShowEmailForm(null);
+    setEmailFormData({ recipientEmail: '', firstName: '', lastName: '' });
+  };
+
+  const handleEmailFormChange = (e) => {
+    setEmailFormData({ ...emailFormData, [e.target.name]: e.target.value });
+  };
+
+  const sendEmailForEvent = async (event) => {
+    if (!emailFormData.recipientEmail || !emailFormData.firstName || !emailFormData.lastName) {
+      setAppError('Please fill in all fields: Email, First Name, and Last Name.');
+      return;
+    }
+
+    setAppError('');
+    try {
+      for (const ticket of event.tickets) {
+        await sendTicketEmail(emailFormData.recipientEmail, {
+          eventName: ticket.eventName,
+          eventDateTime: ticket.eventDateTime,
+          eventLocation: ticket.eventLocation,
+          section: ticket.section,
+          row: ticket.row,
+          seat: ticket.seat,
+          eventId: event.eventId,
+          seatId: ticket.seatId,
+          firstName: emailFormData.firstName,
+          lastName: emailFormData.lastName,
+        });
+      }
+      alert('Emails sent successfully!');
+      closeEmailForm();
+    } catch (err) {
+      console.error('Error sending emails:', err);
+      setAppError('Failed to send emails: ' + err.message);
+    }
   };
 
   const isPublicRoute = location.pathname.match(/^\/[\p{L}\p{N}\-]+(\/seat[0-9]+)?$/u);
@@ -284,14 +319,6 @@ function App() {
               value={formData.seatCount}
               onChange={handleInputChange}
             />
-            <h3>Recipient Email</h3>
-            <input
-              type="email"
-              name="recipientEmail"
-              placeholder="Recipient Email (e.g., customer@example.com)"
-              value={formData.recipientEmail}
-              onChange={handleInputChange}
-            />
             <h3>Additional Information</h3>
             <input
               type="text"
@@ -343,6 +370,37 @@ function App() {
                   <button onClick={() => startEditing(event)} className="edit-button">
                     Edit Tokens
                   </button>
+                  <button onClick={() => openEmailForm(event.eventId)} className="send-email-button">
+                    Send Email
+                  </button>
+                  {showEmailForm === event.eventId && (
+                    <div className="email-form">
+                      <h3>Send Email for {event.tickets[0].eventName}</h3>
+                      <input
+                        type="email"
+                        name="recipientEmail"
+                        placeholder="Recipient Email"
+                        value={emailFormData.recipientEmail}
+                        onChange={handleEmailFormChange}
+                      />
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First Name"
+                        value={emailFormData.firstName}
+                        onChange={handleEmailFormChange}
+                      />
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Last Name"
+                        value={emailFormData.lastName}
+                        onChange={handleEmailFormChange}
+                      />
+                      <button onClick={() => sendEmailForEvent(event)} className="send-button">Send</button>
+                      <button onClick={closeEmailForm} className="cancel-button">Cancel</button>
+                    </div>
+                  )}
                   {editEventId === event.eventId && (
                     <div className="edit-tokens">
                       <h3>Edit Raw Tokens for {event.tickets[0].eventName}</h3>

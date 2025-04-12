@@ -1,9 +1,9 @@
-const { db } = require('./firebase');
-const { doc, setDoc } = require('firebase/firestore');
-const { v4: uuidv4 } = require('uuid');
+import { db } from './firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
 const sendTicketEmail = async (recipientEmail, ticketData) => {
-  console.log('Firebase db instance:', db); // Thêm log để kiểm tra db
+  console.log('Firebase db instance:', db);
 
   const messageId = uuidv4();
 
@@ -45,10 +45,10 @@ const sendTicketEmail = async (recipientEmail, ticketData) => {
     console.log(`Email tracking saved to Firestore: ${messageId}`);
   } catch (firestoreError) {
     console.error(`Error saving email tracking to Firestore: ${firestoreError.message}`);
-    throw firestoreError; // Ném lỗi để hiển thị trên giao diện
+    throw firestoreError;
   }
 
   return messageId;
 };
 
-module.exports = { sendTicketEmail };
+export { sendTicketEmail };

@@ -215,25 +215,23 @@ function App() {
     }
 
     setAppError('');
-    const messageIds = [];
+    const messageId = await sendTicketEmail(emailFormData.recipientEmail, {
+      eventName: event.tickets[0].eventName,
+      eventDateTime: event.tickets[0].eventDateTime,
+      eventLocation: event.tickets[0].eventLocation,
+      eventId: event.eventId,
+      firstName: emailFormData.firstName,
+      lastName: emailFormData.lastName,
+      tickets: event.tickets.map(ticket => ({
+        section: ticket.section,
+        row: ticket.row,
+        seat: ticket.seat,
+        seatId: ticket.seatId,
+      })),
+    });
 
     try {
-      for (const ticket of event.tickets) {
-        const messageId = await sendTicketEmail(emailFormData.recipientEmail, {
-          eventName: ticket.eventName,
-          eventDateTime: ticket.eventDateTime,
-          eventLocation: ticket.eventLocation,
-          section: ticket.section,
-          row: ticket.row,
-          seat: ticket.seat,
-          eventId: event.eventId,
-          seatId: ticket.seatId,
-          firstName: emailFormData.firstName,
-          lastName: emailFormData.lastName,
-        });
-        messageIds.push({ seatId: ticket.seatId, messageId });
-      }
-      console.log('Emails sent successfully with message IDs:', messageIds);
+      console.log('Emails sent successfully with message ID:', messageId);
       alert('Emails sent successfully!');
       closeEmailForm();
     } catch (err) {

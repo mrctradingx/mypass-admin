@@ -33,6 +33,11 @@
   margin-bottom: 10px;
 }
 
+.success {
+  color: green;
+  margin-bottom: 10px;
+}
+
 .form {
   background: #f9f9f9;
   padding: 20px;

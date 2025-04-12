@@ -27,12 +27,14 @@ function App() {
   const [editTokens, setEditTokens] = useState([]);
   const [editNote, setEditNote] = useState('');
   const [appError, setAppError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(''); // Thêm state cho thông báo thành công
   const [emailTracking, setEmailTracking] = useState([]);
   const [showEmailForm, setShowEmailForm] = useState(null);
   const [emailFormData, setEmailFormData] = useState({
     recipientEmail: '',
     firstName: '',
     lastName: '',
+    subject: '', // Thêm trường subject
   });
   const location = useLocation();
 
@@ -196,12 +198,14 @@ function App() {
 
   const openEmailForm = (eventId) => {
     setShowEmailForm(eventId);
-    setEmailFormData({ recipientEmail: '', firstName: '', lastName: '' });
+    setEmailFormData({ recipientEmail: '', firstName: '', lastName: '', subject: '' });
+    setSuccessMessage(''); // Xóa thông báo thành công khi mở form
   };
 
   const closeEmailForm = () => {
     setShowEmailForm(null);
-    setEmailFormData({ recipientEmail: '', firstName: '', lastName: '' });
+    setEmailFormData({ recipientEmail: '', firstName: '', lastName: '', subject: '' });
+    setSuccessMessage(''); // Xóa thông báo thành công khi đóng form
   };
 
   const handleEmailFormChange = (e) => {
@@ -209,30 +213,33 @@ function App() {
   };
 
   const sendEmailForEvent = async (event) => {
-    if (!emailFormData.recipientEmail || !emailFormData.firstName || !emailFormData.lastName) {
-      setAppError('Please fill in all fields: Email, First Name, and Last Name.');
+    if (!emailFormData.recipientEmail || !emailFormData.firstName || !emailFormData.lastName || !emailFormData.subject) {
+      setAppError('Please fill in all fields: Email, First Name, Last Name, and Subject.');
       return;
     }
 
     setAppError('');
-    const messageId = await sendTicketEmail(emailFormData.recipientEmail, {
-      eventName: event.tickets[0].eventName,
-      eventDateTime: event.tickets[0].eventDateTime,
-      eventLocation: event.tickets[0].eventLocation,
-      eventId: event.eventId,
-      firstName: emailFormData.firstName,
-      lastName: emailFormData.lastName,
-      tickets: event.tickets.map(ticket => ({
-        section: ticket.section,
-        row: ticket.row,
-        seat: ticket.seat,
-        seatId: ticket.seatId,
-      })),
-    });
+    setSuccessMessage(''); // Xóa thông báo thành công trước khi gửi
 
     try {
+      const messageId = await sendTicketEmail(emailFormData.recipientEmail, {
+        eventName: event.tickets[0].eventName,
+        eventDateTime: event.tickets[0].eventDateTime,
+        eventLocation: event.tickets[0].eventLocation,
+        eventId: event.eventId,
+        firstName: emailFormData.firstName,
+        lastName: emailFormData.lastName,
+        subject: emailFormData.subject, // Gửi subject
+        tickets: event.tickets.map(ticket => ({
+          section: ticket.section,
+          row: ticket.row,
+          seat: ticket.seat,
+          seatId: ticket.seatId,
+        })),
+      });
+
       console.log('Emails sent successfully with message ID:', messageId);
-      alert('Emails sent successfully!');
+      setSuccessMessage('Emails sent successfully!'); // Hiển thị thông báo thành công
       closeEmailForm();
     } catch (err) {
       console.error('Error sending emails:', err);
@@ -266,6 +273,7 @@ function App() {
             </button>
           </div>
           {appError && <p className="error">{appError}</p>}
+          {successMessage && <p className="success">{successMessage}</p>} {/* Hiển thị thông báo thành công */}
           <div className="form">
             <h3>Event Information</h3>
             <input
@@ -378,6 +386,13 @@ function App() {
                   {showEmailForm === event.eventId && (
                     <div className="email-form">
                       <h3>Send Email for {event.tickets[0].eventName}</h3>
+                      <input
+                        type="text"
+                        name="subject"
+                        placeholder="Email Subject"
+                        value={emailFormData.subject}
+                        onChange={handleEmailFormChange}
+                      />
                       <input
                         type="email"
                         name="recipientEmail"

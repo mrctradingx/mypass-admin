@@ -27,14 +27,14 @@ function App() {
   const [editTokens, setEditTokens] = useState([]);
   const [editNote, setEditNote] = useState('');
   const [appError, setAppError] = useState('');
-  const [successMessage, setSuccessMessage] = useState(''); // Thêm state cho thông báo thành công
+  const [successMessage, setSuccessMessage] = useState('');
   const [emailTracking, setEmailTracking] = useState([]);
   const [showEmailForm, setShowEmailForm] = useState(null);
   const [emailFormData, setEmailFormData] = useState({
     recipientEmail: '',
     firstName: '',
     lastName: '',
-    subject: '', // Thêm trường subject
+    subject: '',
   });
   const location = useLocation();
 
@@ -199,13 +199,13 @@ function App() {
   const openEmailForm = (eventId) => {
     setShowEmailForm(eventId);
     setEmailFormData({ recipientEmail: '', firstName: '', lastName: '', subject: '' });
-    setSuccessMessage(''); // Xóa thông báo thành công khi mở form
+    setSuccessMessage('');
   };
 
   const closeEmailForm = () => {
     setShowEmailForm(null);
     setEmailFormData({ recipientEmail: '', firstName: '', lastName: '', subject: '' });
-    setSuccessMessage(''); // Xóa thông báo thành công khi đóng form
+    setSuccessMessage('');
   };
 
   const handleEmailFormChange = (e) => {
@@ -219,27 +219,31 @@ function App() {
     }
 
     setAppError('');
-    setSuccessMessage(''); // Xóa thông báo thành công trước khi gửi
+    setSuccessMessage('');
 
     try {
-      const messageId = await sendTicketEmail(emailFormData.recipientEmail, {
+      // Log dữ liệu gửi đi để kiểm tra
+      const ticketData = {
         eventName: event.tickets[0].eventName,
         eventDateTime: event.tickets[0].eventDateTime,
         eventLocation: event.tickets[0].eventLocation,
         eventId: event.eventId,
         firstName: emailFormData.firstName,
         lastName: emailFormData.lastName,
-        subject: emailFormData.subject, // Gửi subject
-        tickets: event.tickets.map(ticket => ({
-          section: ticket.section,
-          row: ticket.row,
-          seat: ticket.seat,
-          seatId: ticket.seatId,
+        subject: emailFormData.subject,
+        tickets: event.tickets.map((ticket, index) => ({
+          section: ticket.section || 'N/A',
+          row: ticket.row || 'N/A',
+          seat: ticket.seat || (index + 1).toString(),
+          seatId: ticket.seatId || `seat${ticket.seat || (index + 1)}`,
         })),
-      });
+      };
+      console.log('Sending ticket data to backend:', JSON.stringify(ticketData, null, 2));
+
+      const messageId = await sendTicketEmail(emailFormData.recipientEmail, ticketData);
 
       console.log('Emails sent successfully with message ID:', messageId);
-      setSuccessMessage('Emails sent successfully!'); // Hiển thị thông báo thành công
+      setSuccessMessage('Emails sent successfully!');
       closeEmailForm();
     } catch (err) {
       console.error('Error sending emails:', err);
@@ -273,7 +277,7 @@ function App() {
             </button>
           </div>
           {appError && <p className="error">{appError}</p>}
-          {successMessage && <p className="success">{successMessage}</p>} {/* Hiển thị thông báo thành công */}
+          {successMessage && <p className="success">{successMessage}</p>}
           <div className="form">
             <h3>Event Information</h3>
             <input
